@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta name="application-name" content="Alessandro Roussel" />
+    <meta
+      name="keywords"
+      content="alessandro, roussel, webdesign, webmaster, video, music, sound, paris"
+    />
+    <meta
+      name="description"
+      content="Site officiel d'Alessandro Roussel. Étudiant scientifique à l'université, et intéressé par divers domaines: Vidéo, Cinéma, WebDesign, WebDev, Son, Musique, Science..."
+    />
+    <meta name="author" content="Alessandro Roussel" />
+    <meta name="distribution" content="global" />
+    <meta name="copyright" content="Alessandro Roussel" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=UTF-8" />
+    <meta
+      name="google-site-verification"
+      content="OxtlZa6lU2blDEIBywI1NsjnTX1qx27KIRm7oti0OOQ"
+    />
+
+    <script>
+      (function (i, s, o, g, r, a, m) {
+        i["GoogleAnalyticsObject"] = r;
+        (i[r] =
+          i[r] ||
+          function () {
+            (i[r].q = i[r].q || []).push(arguments);
+          }),
+          (i[r].l = 1 * new Date());
+        (a = s.createElement(o)), (m = s.getElementsByTagName(o)[0]);
+        a.async = 1;
+        a.src = g;
+        m.parentNode.insertBefore(a, m);
+      })(
+        window,
+        document,
+        "script",
+        "//www.google-analytics.com/analytics.js",
+        "ga"
+      );
+      ga("create", "UA-67037657-1", "auto");
+      ga("send", "pageview");
+    </script>
+
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <title>Black Hole #4</title>
+    <style type="text/css">
+      body,
+      html {
+        margin: 0;
+        padding: 0;
+        position: relative;
+      }
+
+      #canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        background-color: #000;
+        cursor: move;
+        z-index: 0;
+      }
+
+      #navbar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        background-color: rgba(25, 25, 25, 0.75);
+        width: 220px;
+        z-index: 1;
+        font-family: "Arial", sans-serif;
+        font-weight: normal;
+        font-size: 14px;
+        color: #fff;
+        height: 0;
+        user-select: none;
+        transition: height 0.5s;
+      }
+
+      #navbarcontainer {
+        display: block;
+        position: absolute;
+        padding: 10px;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        overflow: hidden;
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+
+      #navbar.hover {
+        height: 346px;
+      }
+
+      #navbar.hover #navbarcontainer {
+        opacity: 1;
+      }
+
+      #navbar.hover .navbararrow {
+        margin-bottom: 2px;
+        transform: rotate(0deg);
+      }
+
+      .navbararrow {
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border: 5px solid transparent;
+        border-bottom-color: white;
+        margin-left: 5px;
+        margin-bottom: -3px;
+        transform: rotate(180deg);
+        transition: transform 0.5s, margin-bottom 0.5s;
+      }
+
+      #navbarextendor {
+        display: block;
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -30px;
+        height: 20px;
+        padding: 5px;
+        background-color: rgba(100, 100, 100, 0.5);
+        border-bottom-left-radius: 10px;
+        z-index: 2;
+        text-align: center;
+        line-height: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.5s;
+      }
+
+      #navbarextendor:hover {
+        background-color: rgba(100, 100, 100, 0.8);
+      }
+    </style>
+    <script type="text/javascript">
+      window.onload = function () {
+        let canvas = document.getElementById("canvas");
+        let c = canvas.getContext("2d");
+        window.onresize = resize;
+
+        let clickOn = false;
+        let doubleTouch = false;
+        let clickX = 0;
+        let clickY = 0;
+        let moveX = 0;
+        let moveY = 0;
+
+        let showStars = true;
+        let starsGradient = false;
+        let showDisc = true;
+        let autoOrbit = true;
+        let camSlide = true;
+        let starsN = 750;
+        let discMode = 2;
+        let starsRadius = 0.1;
+        let discQuality = 100;
+        let discRadius = 10;
+        let maxOrder = 2;
+        let maxOrderDisc = 2;
+        let showDoppler = false;
+
+        let time = performance.now();
+        let timeSteps = 0;
+        let fps = 0;
+
+        let discTexture = new Image();
+        discTexture.src = "texture.jpg";
+        let discTexWidth = 1000;
+        let discTexHeight = 1000;
+
+        let dopplerTexture = new Image();
+        dopplerTexture.src = "doppler.jpg";
+        let dopplerLight = new Image();
+        dopplerLight.src = "dopplerLight.jpg";
+        let dopplerDark = new Image();
+        dopplerDark.src = "dopplerDark.jpg";
+
+        initStars();
+        initCamera();
+        resize();
+
+        let dt = 10;
+        window.setInterval(update, dt);
+
+        document.getElementById("showstars").onchange = function (e) {
+          let checked = document.getElementById("showstars").checked;
+          showStars = checked;
+        };
+        document.getElementById("starsgradient").onchange = function (e) {
+          let checked = document.getElementById("starsgradient").checked;
+          starsGradient = checked;
+        };
+        document.getElementById("autoorbit").onchange = function (e) {
+          let checked = document.getElementById("autoorbit").checked;
+          autoOrbit = checked;
+        };
+        document.getElementById("camslide").onchange = function (e) {
+          let checked = document.getElementById("camslide").checked;
+          camSlide = checked;
+        };
+        document.getElementById("showdisc").onchange = function (e) {
+          let checked = document.getElementById("showdisc").checked;
+          showDisc = checked;
+        };
+        document.getElementById("showdoppler").onchange = function (e) {
+          let checked = document.getElementById("showdoppler").checked;
+          showDoppler = checked;
+        };
+        document.getElementById("starsamount").onchange = function (e) {
+          let value = document.getElementById("starsamount").value;
+          starsN = parseInt(value);
+          initStars();
+        };
+        document.getElementById("discquality").onchange = function (e) {
+          let value = document.getElementById("discquality").value;
+          discQuality = parseInt(value);
+        };
+        document.getElementById("discradius").onchange = function (e) {
+          let value = document.getElementById("discradius").value;
+          discRadius = parseInt(value);
+        };
+        document.getElementById("starsradius").onchange = function (e) {
+          let value = document.getElementById("starsradius").value;
+          starsRadius = parseFloat(value);
+        };
+        document.getElementById("discmode").onchange = function (e) {
+          let value = document.getElementById("discmode").value;
+          discMode = parseInt(value);
+          if (discMode != 2) {
+            document.getElementById("showdoppler").disabled = true;
+          } else {
+            document.getElementById("showdoppler").disabled = false;
+          }
+        };
+        document.getElementById("maxorder").onchange = function (e) {
+          let value = document.getElementById("maxorder").value;
+          maxOrder = parseInt(value);
+        };
+        document.getElementById("maxorderdisc").onchange = function (e) {
+          let value = document.getElementById("maxorderdisc").value;
+          maxOrderDisc = parseInt(value);
+        };
+
+        let navbar = document.getElementById("navbar");
+        let navbarOpened = false;
+
+        /*navbar.onmouseenter = function(e){
+            	navbar.classList.add("hover");
+            	window.setTimeout(function(){navbarOpened = true;},100)
+            }*/
+
+        document.getElementById("navbarextendor").onclick = function (e) {
+          if (navbar.classList.contains("hover") && navbarOpened) {
+            navbar.classList.remove("hover");
+          } else {
+            navbar.classList.add("hover");
+            navbarOpened = true;
+          }
+        };
+
+        /*navbar.onmouseleave = function(e){
+            	navbar.classList.remove("hover");
+            }*/
+
+        canvas.onmousedown = function (e) {
+          e.preventDefault();
+          //navbar.classList.remove("hover");
+          if (e.touches == undefined || e.touches[1] == undefined) {
+            doubleTouch = false;
+            if (e.clientX == undefined && e.touches[0] != undefined) {
+              e = e.touches[0];
+            }
+            clickX = e.clientX;
+            clickY = e.clientY;
+            moveX = e.clientX;
+            moveY = e.clientY;
+            clickOn = true;
+          } else {
+            if (!doubleTouch) {
+              doubleTouch0 = [e.touches[0].clientX, e.touches[0].clientY];
+              doubleTouch1 = [e.touches[1].clientX, e.touches[1].clientY];
+            }
+            doubleTouch = true;
+          }
+        };
+
+        window.onmousemove = function (e) {
+          if (e.touches == undefined || e.touches[1] == undefined) {
+            doubleTouch = false;
+            if (e.clientX == undefined) {
+              e = e.touches[0];
+            }
+            if (clickOn) {
+              let x = e.clientX;
+              let y = e.clientY;
+              let dx = x - moveX;
+              let dy = y - moveY;
+
+              camPhiGoal -= dx / 200;
+              camThetaGoal -= dy / 200;
+              camThetaGoal = Math.max(
+                -Math.PI / 2,
+                Math.min(Math.PI / 2, camThetaGoal)
+              );
+
+              moveX = e.clientX;
+              moveY = e.clientY;
+            }
+          } else {
+            let x0 = e.touches[0].clientX;
+            let y0 = e.touches[0].clientY;
+            let x1 = e.touches[1].clientX;
+            let y1 = e.touches[1].clientY;
+
+            if (!doubleTouch) {
+              doubleTouch0 = [x0, y0];
+              doubleTouch1 = [x1, y1];
+            } else {
+              let last_distance = Math.sqrt(
+                Math.pow(doubleTouch0[0] - doubleTouch1[0], 2) +
+                  Math.pow(doubleTouch0[1] - doubleTouch1[1], 2)
+              );
+              let new_distance = Math.sqrt(
+                Math.pow(x0 - x1, 2) + Math.pow(y0 - y1, 2)
+              );
+              let ratio = last_distance / new_distance;
+
+              zoomGoal /= ratio;
+              zoomGoal = Math.max(zoomGoal, 80);
+
+              doubleTouch0 = [x0, y0];
+              doubleTouch1 = [x1, y1];
+            }
+
+            doubleTouch = true;
+          }
+        };
+
+        window.onmouseup = function (e) {
+          if (e.clientX == undefined) {
+            e = e.touches[0];
+          }
+          doubleTouch = false;
+          clickOn = false;
+        };
+
+        canvas.addEventListener("touchstart", canvas.onmousedown);
+        canvas.addEventListener("touchend", window.onmouseup);
+        canvas.addEventListener("touchmove", window.onmousemove);
+
+        // Mouse Wheel compatibility
+        let ElementForMouseWheel = document;
+        if (ElementForMouseWheel.addEventListener) {
+          ElementForMouseWheel.addEventListener(
+            "mousewheel",
+            MouseWheelHandler,
+            false
+          );
+          ElementForMouseWheel.addEventListener(
+            "DOMMouseScroll",
+            MouseWheelHandler,
+            false
+          );
+        } else
+          ElementForMouseWheel.attachEvent("onmousewheel", MouseWheelHandler);
+
+        function MouseWheelHandler(e) {
+          e.preventDefault();
+          e = window.event || e;
+          let delta = Math.max(-1, Math.min(1, e.wheelDelta || -e.detail));
+          let factor = 0.1;
+          let change = 1 + delta * factor;
+          zoomGoal *= change;
+          zoomGoal = Math.max(zoomGoal, 80);
+        }
+
+        function resize() {
+          let width = window.innerWidth;
+          let height = window.innerHeight;
+          canvas.width = width;
+          canvas.height = height;
+          update();
+        }
+
+        function update() {
+          c.clearRect(0, 0, canvas.width, canvas.height);
+          timeSteps++;
+          if (timeSteps == 30) {
+            fps = Math.round((1000 * timeSteps) / (performance.now() - time));
+            time = performance.now();
+            timeSteps = 0;
+            document.getElementById("fpsDisplay").innerHTML = fps;
+          }
+
+          if (showStars) {
+            drawStars();
+          }
+
+          if (showDisc) {
+            drawDisk();
+          }
+
+          if (autoOrbit) {
+            camPhi += 0.0006;
+            camPhiGoal += 0.0006;
+          }
+
+          if (!camSlide) {
+            camD = camDGoal;
+            zoom = zoomGoal;
+            camPhi = camPhiGoal;
+            camTheta = camThetaGoal;
+          } else {
+            let camSnapSpeed = 0.1;
+            if (clickOn) {
+              camSnapSpeed = 0.2;
+            }
+            camD += (1 - Math.exp(-camSnapSpeed)) * (camDGoal - camD);
+            zoom += (1 - Math.exp(-camSnapSpeed)) * (zoomGoal - zoom);
+            camPhi += (1 - Math.exp(-camSnapSpeed)) * (camPhiGoal - camPhi);
+            camTheta +=
+              (1 - Math.exp(-camSnapSpeed)) * (camThetaGoal - camTheta);
+          }
+
+          camTheta = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, camTheta));
+        }
+
+        function initStars() {
+          stars = [];
+          for (let i = 0; i < starsN; i++) {
+            let beta = 2 * Math.PI * Math.random();
+            let alpha = Math.acos(2 * Math.random() - 1);
+            let temperature = 2000 + Math.random() * 8000;
+            let luminosity = Math.random() + 0.5;
+            stars.push([beta, alpha, temperature, luminosity]);
+          }
+        }
+
+        function initCamera() {
+          zoom = 80;
+          zoomGoal = 500;
+          camD = 20;
+          camDGoal = 20;
+          camPhi = 0;
+          camTheta = 0;
+          camPhiGoal = 0;
+          camThetaGoal = -0.2;
+        }
+
+        function impactParameterApprox(spannedAngle) {
+          let K = 2.27 / camD;
+          let J = -0.162 / Math.pow(camD, 0.297);
+          let N = 2.81 * Math.pow(camD, 0.4325);
+          let O =
+            Math.pow(
+              Math.pow(spannedAngle - J, N) + Math.pow(Math.PI, N),
+              1 / N
+            ) + K;
+          let res =
+            1 -
+            Math.exp(Math.PI - O) +
+            2.1 * Math.exp(-0.8 * O) * (1 - Math.exp(1.67 * (Math.PI - O)));
+          let b = (3 * Math.sqrt(3)) / 2 / res;
+          return b;
+        }
+
+        function acot(x) {
+          return Math.PI / 2 - Math.atan(x);
+        }
+
+        function cot(x) {
+          return 1 / Math.tan(x);
+        }
+
+        function BfromRAlpha(r, alpha) {
+          let filter = r > 1.85 && r < 100;
+          let visible = false;
+          let value = 2.598;
+
+          if (filter) {
+            let O =
+              1.53 / Math.pow(r - 1.5, 0.19) +
+              0.059 * Math.exp(Math.pow(r + 0.1, 0.716)) -
+              0.0582;
+            let M = 0.43 * Math.exp(-0.227 * Math.pow(r - 1.5, 1.28));
+            let b1 = 0.5 + 0.37 / (r - 0.88) + r;
+            let X = Math.pow(b1 / r / O, 2);
+            let alphaMax = O * acot(Math.sqrt((4 / Math.PI / Math.PI - M) / X));
+
+            if (alpha > 0) {
+              visible = true;
+              if (alpha < alphaMax) {
+                value =
+                  b1 *
+                  Math.sin(1 / Math.sqrt(X * Math.pow(cot(alpha / O), 2) + M));
+              } else {
+                let L =
+                  0.36 * Math.exp(0.11 * Math.pow(Math.log(r - 1.5) - 1.2, 2));
+                value =
+                  2.598 +
+                  (b1 - 2.598) * Math.exp(-L * Math.pow(alpha - alphaMax, 2));
+              }
+
+              return value;
+            }
+          }
+
+          return undefined;
+        }
+
+        function XYfromAlphaBeta(alpha, beta, order) {
+          let x = Math.cos(alpha);
+          let y = Math.sin(alpha) * Math.cos(beta);
+          let z = Math.sin(alpha) * Math.sin(beta);
+
+          let x2 = x * Math.cos(camPhi) + y * Math.sin(camPhi);
+          let y2 = y * Math.cos(camPhi) - x * Math.sin(camPhi);
+          let z2 = z;
+
+          let x3 = x2 * Math.cos(camTheta) - z2 * Math.sin(camTheta);
+          let y3 = y2;
+          let z3 = z2 * Math.cos(camTheta) + x2 * Math.sin(camTheta);
+
+          x = x3;
+          y = y3;
+          z = z3;
+
+          let betaRot = Math.atan2(z, y);
+          let alphaRot = Math.atan2(Math.sqrt(z * z + y * y), x);
+          while (alphaRot < 0) {
+            alphaRot += 2 * Math.PI;
+          }
+
+          let spannedAngle = alphaRot;
+          if (order % 2 == 1) {
+            spannedAngle = 2 * Math.PI - spannedAngle;
+          }
+          spannedAngle += Math.floor(order / 2) * 2 * Math.PI;
+
+          let bmax = impactParameterApprox(Math.PI / 2);
+
+          let b = impactParameterApprox(spannedAngle);
+          let r = Math.tan(Math.asin(b / bmax)) * zoom;
+
+          let swap = 1;
+          if (order % 2 == 1) {
+            swap = -1;
+          }
+
+          let xx = r * swap * Math.cos(betaRot);
+          let yy = r * swap * Math.sin(betaRot);
+          let toDraw = Math.cos(alphaRot) < -0.1 || order > 0;
+
+          return [[xx, yy], toDraw];
+        }
+
+        function KtoRGB(temperature) {
+          let x = 0.576 * Math.exp(-3.92 * temperature * 1e-4) + 0.263;
+          let y = 1.03 * x - 0.862 * Math.exp(-9.58 * temperature * 1e-4);
+          let z = 1 - x - y;
+          let r = 3.2404542 * x - 1.5371385 * y - 0.4985314 * z;
+          let g = -1.052807 * x + 2.037704 * y + 0.045138 * z;
+          let b = 0.0556434 * x - 0.2040259 * y + 1.0572252 * z;
+          let exposureThreshold = 0.1;
+          r += exposureThreshold;
+          g += exposureThreshold;
+          b += exposureThreshold;
+          let maxRGB = Math.max(r, Math.max(g, b));
+
+          return [
+            Math.min(255, Math.max(0, Math.floor((r * 256) / maxRGB))),
+            Math.min(255, Math.max(0, Math.floor((g * 256) / maxRGB))),
+            Math.min(255, Math.max(0, Math.floor((b * 256) / maxRGB))),
+          ];
+        }
+
+        function drawStars() {
+          c.globalCompositeOperation = "lighter";
+
+          for (let i = 0; i < starsN; i++) {
+            for (let order = 0; order < maxOrder; order++) {
+              let beta = stars[i][0];
+              let alpha = stars[i][1];
+
+              let angleDiff = 1e-4;
+              let position = XYfromAlphaBeta(alpha, beta, order);
+              let toDraw = position[1];
+
+              if (toDraw) {
+                let xy1 = position[0];
+                let xy2 = XYfromAlphaBeta(alpha + angleDiff, beta, order)[0];
+                let xy3 = XYfromAlphaBeta(alpha, beta + angleDiff, order)[0];
+                let dxyA = [xy2[0] - xy1[0], xy2[1] - xy1[1]];
+                let dxyB = [xy3[0] - xy1[0], xy3[1] - xy1[1]];
+                let skySurface = Math.sin(alpha) * angleDiff * angleDiff;
+                let screenSurface = Math.abs(
+                  dxyA[0] * dxyB[1] - dxyA[1] * dxyB[0]
+                );
+                let magnification = screenSurface / skySurface;
+                let alphaSeen = Math.atan(
+                  Math.sqrt(xy1[0] * xy1[0] + xy1[1] * xy1[1])
+                );
+                let euclideanMagnification = 1 / Math.cos(alphaSeen);
+                magnification /= euclideanMagnification;
+                magnification /= Math.sqrt(80);
+
+                drawStar(xy1, magnification, i);
+              }
+            }
+          }
+        }
+
+        function drawStar(xy, magnification, i) {
+          let x = canvas.width / 2 + xy[0];
+          let y = canvas.height / 2 - xy[1];
+          let radius = starsRadius * Math.sqrt(magnification * stars[i][3]);
+
+          if (
+            isFinite(x) &&
+            isFinite(y) &&
+            x + radius > 0 &&
+            x - radius < canvas.width &&
+            y + radius > 0 &&
+            y - radius < canvas.height
+          ) {
+            let rgb = KtoRGB(stars[i][2]);
+            let exposure = 0.5 * Math.pow(magnification * stars[i][3], 0.3);
+
+            if (radius > 0.1 && exposure > 0.01) {
+              if (radius > 1 && starsGradient) {
+                let gradient = c.createRadialGradient(x, y, 0, x, y, radius);
+                gradient.addColorStop(
+                  0,
+                  "rgb(" +
+                    rgb[0] * exposure +
+                    "," +
+                    rgb[1] * exposure +
+                    "," +
+                    rgb[2] * exposure +
+                    ")"
+                );
+                gradient.addColorStop(
+                  0.5,
+                  "rgb(" +
+                    rgb[0] * exposure * 0.75 +
+                    "," +
+                    rgb[1] * exposure * 0.75 +
+                    "," +
+                    rgb[2] * exposure * 0.75 +
+                    ")"
+                );
+                gradient.addColorStop(
+                  0.75,
+                  "rgb(" +
+                    rgb[0] * exposure * 0.44 +
+                    "," +
+                    rgb[1] * exposure * 0.44 +
+                    "," +
+                    rgb[2] * exposure * 0.44 +
+                    ")"
+                );
+                gradient.addColorStop(1, "black");
+                c.fillStyle = gradient;
+              } else {
+                c.fillStyle =
+                  "rgb(" +
+                  rgb[0] * exposure * 0.75 +
+                  "," +
+                  rgb[1] * exposure * 0.75 +
+                  "," +
+                  rgb[2] * exposure * 0.75 +
+                  ")";
+              }
+
+              c.beginPath();
+              c.arc(x, y, radius, 0, 2 * Math.PI);
+              c.fill();
+            }
+          }
+        }
+
+        function drawDisk() {
+          let rIn = 3;
+          let rOut = discRadius;
+          let xysIn = [];
+          let xysOut = [];
+          let points = Math.round(
+            (Math.min(Math.max(Math.round(zoom / 2), 50), 400) * discQuality) /
+              100
+          );
+
+          for (let order = 0; order < maxOrderDisc; order++) {
+            xysIn.push([]);
+            xysOut.push([]);
+            for (let pointI = 0; pointI < points + 1; pointI++) {
+              for (let inOut = 0; inOut < 2; inOut++) {
+                let phi0 = (2 * Math.PI * pointI) / points - camPhi;
+
+                let inclinaison =
+                  Math.sign(camTheta) * Math.max(0.001, Math.abs(camTheta));
+
+                let phi;
+                let s = Math.sin(inclinaison);
+                if (order == 0) {
+                  phi = 2 * acot(s * cot(phi0 / 2));
+                } else {
+                  phi = acot(cot(phi0) / s);
+                  if (Math.sin(phi0) <= 0) {
+                    phi += Math.PI;
+                  }
+                }
+
+                let r = rIn;
+                if (inOut) {
+                  r = rOut;
+                }
+
+                let x = r * Math.cos(phi);
+                let y = r * Math.sin(phi);
+                let z = 0;
+
+                let x2 = x * Math.cos(inclinaison) - z * Math.sin(inclinaison);
+                let z2 = z * Math.cos(inclinaison) + x * Math.sin(inclinaison);
+                let y2 = y;
+
+                let betaRot = Math.atan2(z2, y2) + Math.PI * order;
+                let alphaRot = Math.atan2(Math.sqrt(z2 * z2 + y2 * y2), x2);
+                alphaRot *= Math.pow(-1, order);
+                alphaRot +=
+                  Math.PI *
+                  (Math.round(order + 1) - (Math.round(order + 1) % 2));
+
+                let b = BfromRAlpha(r, alphaRot);
+
+                let bmax = impactParameterApprox(Math.PI / 2);
+                let rSeen = Math.tan(Math.asin(b / bmax)) * zoom;
+
+                let xx = rSeen * Math.cos(betaRot);
+                let yy = rSeen * Math.sin(betaRot);
+
+                if (inOut) {
+                  xysOut[order].push([xx, yy, phi + camPhi]);
+                } else {
+                  xysIn[order].push([xx, yy, phi + camPhi]);
+                }
+              }
+            }
+          }
+
+          if (discMode == 0) {
+            c.globalCompositeOperation = "normal";
+            c.fillStyle = "white";
+
+            for (let order = maxOrderDisc - 1; order >= 0; order--) {
+              c.beginPath();
+
+              for (let i = 0; i < points + 1; i++) {
+                let x = canvas.width / 2 + xysIn[order][i][0];
+                let y = canvas.height / 2 - xysIn[order][i][1];
+                if (i == 0) {
+                  c.moveTo(x, y);
+                } else {
+                  c.lineTo(x, y);
+                }
+              }
+
+              for (let i = 0; i < points + 1; i++) {
+                let x = canvas.width / 2 - xysOut[order][i][0];
+                let y = canvas.height / 2 - xysOut[order][i][1];
+                c.lineTo(x, y);
+              }
+
+              c.closePath();
+              c.fill();
+            }
+          } else if (discMode == 1) {
+            c.globalCompositeOperation = "normal";
+
+            for (let order = maxOrderDisc - 1; order >= 0; order--) {
+              for (let i = 0; i < points; i++) {
+                let hue = Math.round((180 / Math.PI) * xysIn[order][i][2]);
+
+                c.fillStyle = "hsl(" + hue + ",100%,50%)";
+                c.strokeStyle = "hsl(" + hue + ",100%,50%)";
+                c.lineWidth = 1;
+                c.beginPath();
+
+                let x = canvas.width / 2 + xysIn[order][i][0];
+                let y = canvas.height / 2 - xysIn[order][i][1];
+                c.moveTo(x, y);
+
+                x = canvas.width / 2 + xysOut[order][i][0];
+                y = canvas.height / 2 - xysOut[order][i][1];
+                c.lineTo(x, y);
+
+                x = canvas.width / 2 + xysOut[order][i + 1][0];
+                y = canvas.height / 2 - xysOut[order][i + 1][1];
+                c.lineTo(x, y);
+
+                x = canvas.width / 2 + xysIn[order][i + 1][0];
+                y = canvas.height / 2 - xysIn[order][i + 1][1];
+                c.lineTo(x, y);
+
+                c.closePath();
+                c.fill();
+                c.stroke();
+              }
+            }
+          } else {
+            // Texture disc
+            let sliceExpand = 0.2;
+            let triangleExpand = 0.2;
+
+            for (let order = maxOrderDisc - 1; order >= 0; order--) {
+              for (let i = 0; i < points; i++) {
+                let startPhi = (xysIn[order][i][2] / 2 / Math.PI) % 1;
+                while (startPhi < 0) {
+                  startPhi += 1;
+                }
+                let endPhi = Math.min(1, startPhi + 1 / points);
+                let startU = startPhi * discTexWidth;
+                let endU = endPhi * discTexWidth;
+
+                pnts = [];
+
+                let x =
+                  canvas.width / 2 +
+                  (xysIn[order][i][0] -
+                    sliceExpand *
+                      (xysIn[order][i + 1][0] - xysIn[order][i][0]));
+                let y =
+                  canvas.height / 2 -
+                  (xysIn[order][i][1] -
+                    sliceExpand *
+                      (xysIn[order][i + 1][1] - xysIn[order][i][1]));
+                pnts.push([x, y, startU, 0]);
+
+                x =
+                  canvas.width / 2 +
+                  (xysOut[order][i][0] -
+                    sliceExpand *
+                      (xysOut[order][i + 1][0] - xysOut[order][i][0]));
+                y =
+                  canvas.height / 2 -
+                  (xysOut[order][i][1] -
+                    sliceExpand *
+                      (xysOut[order][i + 1][1] - xysOut[order][i][1]));
+                pnts.push([x, y, startU, discTexHeight]);
+
+                x =
+                  canvas.width / 2 +
+                  (xysOut[order][i + 1][0] -
+                    sliceExpand *
+                      (xysOut[order][i][0] - xysOut[order][i + 1][0]));
+                y =
+                  canvas.height / 2 -
+                  (xysOut[order][i + 1][1] -
+                    sliceExpand *
+                      (xysOut[order][i][1] - xysOut[order][i + 1][1]));
+                pnts.push([x, y, endU, discTexHeight]);
+
+                x =
+                  canvas.width / 2 +
+                  (xysIn[order][i + 1][0] -
+                    sliceExpand *
+                      (xysIn[order][i][0] - xysIn[order][i + 1][0]));
+                y =
+                  canvas.height / 2 -
+                  (xysIn[order][i + 1][1] -
+                    sliceExpand *
+                      (xysIn[order][i][1] - xysIn[order][i + 1][1]));
+                pnts.push([x, y, endU, 0]);
+
+                textureMap(pnts, triangleExpand, 0);
+              }
+            }
+          }
+        }
+
+        function textureMap(pts, expand, uOffset) {
+          let tris = [
+            [0, 1, 2],
+            [2, 3, 0],
+          ];
+          for (let t = 0; t < 2; t++) {
+            let pp = tris[t];
+            let x0 = pts[pp[0]][0],
+              x1 = pts[pp[1]][0],
+              x2 = pts[pp[2]][0];
+            let y0 = pts[pp[0]][1],
+              y1 = pts[pp[1]][1],
+              y2 = pts[pp[2]][1];
+            let u0 = pts[pp[0]][2] + uOffset,
+              u1 = pts[pp[1]][2] + uOffset,
+              u2 = pts[pp[2]][2] + uOffset;
+            let v0 = pts[pp[0]][3],
+              v1 = pts[pp[1]][3],
+              v2 = pts[pp[2]][3];
+
+            let minU = Math.min(u0, Math.min(u1, u2));
+            let maxU = Math.max(u0, Math.max(u1, u2));
+            let shiftU = -Math.floor(minU / discTexWidth);
+            u0 += shiftU * discTexWidth;
+            u1 += shiftU * discTexWidth;
+            u2 += shiftU * discTexWidth;
+            u0 = Math.min(u0, discTexWidth);
+            u1 = Math.min(u1, discTexWidth);
+            u2 = Math.min(u2, discTexWidth);
+
+            let delta =
+              u0 * v1 + v0 * u2 + u1 * v2 - v1 * u2 - v0 * u1 - u0 * v2;
+            let delta_a =
+              x0 * v1 + v0 * x2 + x1 * v2 - v1 * x2 - v0 * x1 - x0 * v2;
+            let delta_b =
+              u0 * x1 + x0 * u2 + u1 * x2 - x1 * u2 - x0 * u1 - u0 * x2;
+            let delta_c =
+              u0 * v1 * x2 +
+              v0 * x1 * u2 +
+              x0 * u1 * v2 -
+              x0 * v1 * u2 -
+              v0 * u1 * x2 -
+              u0 * x1 * v2;
+            let delta_d =
+              y0 * v1 + v0 * y2 + y1 * v2 - v1 * y2 - v0 * y1 - y0 * v2;
+            let delta_e =
+              u0 * y1 + y0 * u2 + u1 * y2 - y1 * u2 - y0 * u1 - u0 * y2;
+            let delta_f =
+              u0 * v1 * y2 +
+              v0 * y1 * u2 +
+              y0 * u1 * v2 -
+              y0 * v1 * u2 -
+              v0 * u1 * y2 -
+              u0 * y1 * v2;
+
+            x0 -= (x1 - x0) * expand;
+            y0 -= (y1 - y0) * expand;
+
+            c.save();
+            c.beginPath();
+            c.moveTo(x0, y0);
+            c.lineTo(x1, y1);
+            c.lineTo(x2, y2);
+            c.closePath();
+            c.clip();
+
+            c.transform(
+              delta_a / delta,
+              delta_d / delta,
+              delta_b / delta,
+              delta_e / delta,
+              delta_c / delta,
+              delta_f / delta
+            );
+
+            c.globalCompositeOperation = "normal";
+            c.drawImage(discTexture, 0, 0);
+
+            if (showDoppler) {
+              let dopplerOffsetU =
+                (camPhi / (2 * Math.PI) - 0.25) * discTexWidth;
+              dopplerOffsetU -=
+                Math.floor(dopplerOffsetU / discTexWidth) * discTexWidth;
+
+              c.globalAlpha = Math.pow(Math.cos(camTheta), 2);
+
+              c.globalCompositeOperation = "hard-light";
+              c.drawImage(dopplerTexture, dopplerOffsetU, 0);
+              c.drawImage(dopplerTexture, dopplerOffsetU - discTexWidth, 0);
+
+              c.globalAlpha = 1;
+            }
+
+            c.restore();
+          }
+        }
+      };
+    </script>
+  </head>
+
+  <body>
+    <canvas id="canvas"></canvas>
+    <div id="navbar" class="">
+      <div id="navbarcontainer">
+        Show stars : <input type="checkbox" id="showstars" checked /> <br />
+        Stars amount :
+        <select id="starsamount">
+          <option value="100">100</option>
+          <option value="250">250</option>
+          <option value="500">500</option>
+          <option value="750" selected>750</option>
+          <option value="1000">1000</option>
+          <option value="1500">1500</option>
+          <option value="2000">2000</option>
+          <option value="5000">5000</option>
+          <option value="10000">10000</option>
+        </select>
+        <br />
+        Stars radius :
+        <select id="starsradius">
+          <option value="0.05">5</option>
+          <option value="0.1" selected>10</option>
+          <option value="0.2">20</option>
+          <option value="0.5">50</option>
+          <option value="1">100</option>
+        </select>
+        <br />
+        Secondary images :
+        <select id="maxorder">
+          <option value="1">0</option>
+          <option value="2" selected>1</option>
+          <option value="3">2</option>
+          <option value="4">3</option>
+        </select>
+        <br />
+        Diffraction gradient : <input type="checkbox" id="starsgradient" />
+        <br />
+        <br />
+        Show disc : <input type="checkbox" id="showdisc" checked /> <br />
+        Doppler effect : <input type="checkbox" id="showdoppler" /> <br />
+        Disc mode :
+        <select id="discmode">
+          <option value="0">White</option>
+          <option value="1">Hue gradient</option>
+          <option value="2" selected>Textured</option>
+        </select>
+        <br />
+        Disc quality :
+        <select id="discquality">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+          <option value="200">200</option>
+          <option value="400">400</option>
+        </select>
+        <br />
+        Disc radius :
+        <select id="discradius">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="15">15</option>
+        </select>
+        <br />
+        Secondary images :
+        <select id="maxorderdisc">
+          <option value="1">0</option>
+          <option value="2" selected>1</option>
+          <option value="3">2</option>
+          <option value="4">3</option>
+        </select>
+        <br />
+        <br />
+        Auto-orbit : <input type="checkbox" id="autoorbit" checked /> <br />
+        Camera slide : <input type="checkbox" id="camslide" checked />
+        <br />
+        <br />
+        FPS : <span id="fpsDisplay"></span>
+      </div>
+
+      <div id="navbarextendor">
+        Options
+        <div class="navbararrow"></div>
+      </div>
+    </div>
+  </body>
+</html>
